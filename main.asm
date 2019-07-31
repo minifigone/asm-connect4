@@ -25,6 +25,8 @@ aiprevious dd ?
 
 ; for counting how many tokens are in a row/diagonal
 vcheck_accumulator BYTE 0
+roaming_index DWORD ?
+static_index DWORD ?
 
 .code
 
@@ -78,7 +80,7 @@ horizontal_check_loop:
 	; crawl left
 	check_left_loop:
 		cmp esi, 0 ; off the left side of the board ; TODO make work. i.e. don't div ptr value, div index determined somehow
-		jl reset_ptr
+		jl reset_ptr_horizontial
 
 		sub esi, rows
 		mov ebx, [esi]
@@ -94,7 +96,7 @@ horizontal_check_loop:
 			jmp reset_ptr
 	
 	; reset
-	reset_ptr:
+	reset_ptr_horizontial:
 		mov esi, edi
 
 	; crawl right
@@ -128,11 +130,12 @@ horizontal_check_loop:
 check_tb_diagonal:
 	check_up_left_loop:
 		cmp esi, 0 ; off the left side of the board ; TODO make work. i.e. don't div ptr value, div index determined somehow
-		jl reset_ptr
+		jl reset_ptr_tb_diagonal
 		mov edx, 0
 		mov eax, esi
 		div rows ; TODO make work. i.e. don't div ptr value, div index determined somehow
 		cmp edx, 5 ; wrapped to the bottom of the next column, so off the top of the board
+		je reset_ptr_tb_diagonal
 
 		sub esi, rows
 		sub esi, 1
@@ -146,12 +149,33 @@ check_tb_diagonal:
 			jmp check_up_left_loop
 
 		tb_ul_diff_token:
-			jmp reset_ptr
+			jmp reset_ptr_tb_diagonal
 
-	reset_ptr:
+	reset_ptr_tb_diagonal:
 		mov esi, edi
 
 	check_down_right_loop:
+		cmp esi, 41 ; off the right side of the board ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		jg tb_diagonal_check
+		mov edx, 0
+		mov eax, esi
+		div rows ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		cmp edx, 0 ; wrapped to the top of the next column, so off the bottom of the board
+		je tb_diagonal_check
+
+		add esi, rows
+		add esi, 1
+		mov ebx, [esi]
+		cmp ebx, [edi]
+		je tb_dr_same_token
+		jne tb_dr_diff_token
+
+		tb_dr_same_token:
+			inc ecx
+			jmp check_down_right_loop
+
+		tb_dr_diff_token:
+			jmp tb_diagonal_check
 
 	tb_diagonal_check:
 		cmp ecx, 4
@@ -159,10 +183,64 @@ check_tb_diagonal:
 
 	; reset for other diagonal
 	mov ecx, 0
-	move esi, edi
+	mov esi, edi
 	
 ; check other diagonal, requires some sort of accumulator
 check_bt_diagonal:
+	check_down_left_loop:
+		cmp esi, 0 ; off the left side of the board ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		jl reset_ptr_bt_diagonal
+		mov edx, 0
+		mov eax, esi
+		div rows ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		cmp edx, 0 ; wrapped to the top of the next column, so off the bottom of the board
+		je reset_ptr_bt_diagonal
+
+		sub esi, rows
+		add esi, 1
+		mov ebx, [esi]
+		cmp ebx, [edi]
+		je bt_dl_same_token
+		jne bt_dl_diff_token
+
+		bt_dl_same_token:
+			inc ecx
+			jmp check_down_left_loop
+
+		bt_dl_diff_token:
+			jmp reset_ptr_bt_diagonal
+
+	reset_ptr_bt_diagonal:
+		mov esi, edi
+
+	count_up_right_loop:
+		cmp esi, 41 ; off the right side of the board ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		jg bt_diagonal_check
+		mov edx, 0
+		mov eax, esi
+		div rows ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		cmp edx, 5 ; wrapped to the bottom of the next column, so off the top of the board
+
+		add esi, rows
+		add esi, 1
+		mov ebx, [esi]
+		cmp ebx, [edi]
+		je bt_ur_same_token
+		jne bt_ur_diff_token
+
+		bt_ur_same_token:
+			inc ecx
+			jmp count_up_right_loop
+
+		bt_ur_diff_token:
+			jmp bt_diagonal_check
+
+	bt_diagonal_check:
+		cmp ecx, 4
+		jge victory
+
+; maybe clear things
+jmp no_victory
 
 victory:
 
