@@ -41,14 +41,17 @@ ret
 WinProc endp
 
 checkVictory PROC
+; static_index -> index of last played token
 ; edi -> pointer for last played token
 ; esi -> roaming pointer
-; eax -> used for division
+; eax -> used for division, used for temporarily holding index values
 ; ebx -> used to stage comparison
 ; ecx -> used for counting tokens of a type in a line
 ; edx -> used for division
 
 mov esi, edi ; copy pointer
+mov eax, static_index
+mov roaming_index, eax ; copy index
 mov ecx, 0
 
 ; check down
@@ -57,10 +60,10 @@ down_check_loop:
 	jge victory
 
 	mov edx, 0
-	mov eax, esi
-	div rows ; will tell if at top of column, i.e. can't keep checking down ; TODO make work. i.e. don't div ptr value, div index determined somehow
+	mov eax, roaming_index
+	div rows ; will tell if at top of column, i.e. can't keep checking down
 	cmp edx, 0 ; at the top of the next column
-	je horizontal_check_loop ;#2 at the top of the next column
+	je horizontal_check_loop ; at the top of the next column
 	
 	inc esi ; move the pointer down the column
 	mov ebx, [esi] ; stage comparison
@@ -70,24 +73,35 @@ down_check_loop:
 	
 	down_same_token:
 		inc ecx ; same token, increment counter
-		jmp down_check_loop ;#2 same token, loop
+		inc esi
+		mov eax, roaming_index
+		inc eax
+		mov roaming_index, eax
+		jmp down_check_loop ; same token, loop
 	
 	down_diff_token: ; don't keep checking if the token changed, shouldn't be a victory below that
 		mov esi, edi ; reset pointer	
 		mov ecx, 0 ; reset counter
+		mov eax, static_index
+		inc eax
+		mov roaming_index, eax
 
 horizontal_check_loop:
 	; crawl left
 	check_left_loop:
-		cmp esi, 0 ; off the left side of the board ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		sub esi, rows
+		mov eax, roaming_index
+		sub eax, rows
+		mov roaming_index, eax
+
+		cmp eax, 0 ; off the left side of the board
 		jl reset_ptr_horizontial
 
-		sub esi, rows
 		mov ebx, [esi]
 		cmp ebx, [edi]
 		je left_same_token
 		jne left_diff_token
-		
+
 		left_same_token:
 			inc ecx
 			jmp check_left_loop
@@ -98,10 +112,17 @@ horizontal_check_loop:
 	; reset
 	reset_ptr_horizontial:
 		mov esi, edi
+		mov eax, static_index
+		mov roaming_index, eax
 
 	; crawl right
 	check_right_loop:
-		cmp esi, 41 ; off the right side of the board ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		add esi, rows
+		mov eax, roaming_index
+		add eax, rows
+		mov roaming_index, eax
+
+		cmp eax, 41 ; off the right side of the board
 		jg horizontial_check
 
 		add esi, rows
@@ -125,24 +146,32 @@ horizontal_check_loop:
 	; reset for diagonal
 	mov ecx, 0
 	mov esi, edi
+	mov eax, static_index
+	mov roaming_index, eax
 
 ; check one diagonal, requires some sort of accumulator
 check_tb_diagonal:
 	check_up_left_loop:
-		cmp esi, 0 ; off the left side of the board ; TODO make work. i.e. don't div ptr value, div index determined somehow
-		jl reset_ptr_tb_diagonal
+		sub esi, rows
+		sub esi, 1
+		mov eax, roaming_index
+		sub eax, rows
+		sub eax, 1
+		mov roaming_index, eax
+
 		mov edx, 0
-		mov eax, esi
-		div rows ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		div rows
 		cmp edx, 5 ; wrapped to the bottom of the next column, so off the top of the board
 		je reset_ptr_tb_diagonal
 
-		sub esi, rows
-		sub esi, 1
+		mov eax, roaming_index
+		cmp eax, 0 ; off the left side of the board
+		jl reset_ptr_tb_diagonal
+
 		mov ebx, [esi]
 		cmp ebx, [edi]
 		je tb_ul_same_token
-		jne tb_ul_diff_token		
+		jne tb_ul_diff_token
 
 		tb_ul_same_token:
 			inc ecx
@@ -153,18 +182,25 @@ check_tb_diagonal:
 
 	reset_ptr_tb_diagonal:
 		mov esi, edi
+		mov eax, static_index
+		mov roaming_index, eax
 
 	check_down_right_loop:
-		cmp esi, 41 ; off the right side of the board ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		add esi, rows
+		add esi, 1
+		mov eax, roaming_index
+		add eax, rows
+		add eax, 1
+		mov roaming_index, eax
+
+		cmp eax, 41 ; off the right side of the board
 		jg tb_diagonal_check
+		
 		mov edx, 0
-		mov eax, esi
-		div rows ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		div rows
 		cmp edx, 0 ; wrapped to the top of the next column, so off the bottom of the board
 		je tb_diagonal_check
 
-		add esi, rows
-		add esi, 1
 		mov ebx, [esi]
 		cmp ebx, [edi]
 		je tb_dr_same_token
@@ -184,20 +220,27 @@ check_tb_diagonal:
 	; reset for other diagonal
 	mov ecx, 0
 	mov esi, edi
+	mov eax, static_index
+	mov roaming_index, eax
 	
 ; check other diagonal, requires some sort of accumulator
 check_bt_diagonal:
 	check_down_left_loop:
-		cmp esi, 0 ; off the left side of the board ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		sub esi, rows
+		add esi, 1
+		mov eax, roaming_index
+		sub eax, rows
+		add eax, 1
+		mov roaming_index, eax
+
+		cmp eax, 0 ; off the left side of the board
 		jl reset_ptr_bt_diagonal
+
 		mov edx, 0
-		mov eax, esi
-		div rows ; TODO make work. i.e. don't div ptr value, div index determined somehow
+		div rows
 		cmp edx, 0 ; wrapped to the top of the next column, so off the bottom of the board
 		je reset_ptr_bt_diagonal
 
-		sub esi, rows
-		add esi, 1
 		mov ebx, [esi]
 		cmp ebx, [edi]
 		je bt_dl_same_token
@@ -212,17 +255,24 @@ check_bt_diagonal:
 
 	reset_ptr_bt_diagonal:
 		mov esi, edi
+		mov eax, static_index
+		mov roaming_index, eax
 
 	count_up_right_loop:
-		cmp esi, 41 ; off the right side of the board ; TODO make work. i.e. don't div ptr value, div index determined somehow
-		jg bt_diagonal_check
-		mov edx, 0
-		mov eax, esi
-		div rows ; TODO make work. i.e. don't div ptr value, div index determined somehow
-		cmp edx, 5 ; wrapped to the bottom of the next column, so off the top of the board
-
 		add esi, rows
 		add esi, 1
+		mov eax, roaming_index
+		add eax, rows
+		add eax, 1
+		mov roaming_index, eax
+
+		cmp eax, 41 ; off the right side of the board
+		jg bt_diagonal_check
+
+		mov edx, 0
+		div rows
+		cmp edx, 5 ; wrapped to the bottom of the next column, so off the top of the board
+
 		mov ebx, [esi]
 		cmp ebx, [edi]
 		je bt_ur_same_token
@@ -243,6 +293,7 @@ check_bt_diagonal:
 jmp no_victory
 
 victory:
+	; raise a flag or something, i don't know
 
 no_victory:
 ret ;
