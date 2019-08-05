@@ -20,9 +20,15 @@ empty BYTE 0
 player_piece BYTE 1
 computer_piece BYTE 2
 
-;Recors the previous move taken be the AI
+;Records the previous move taken be the AI
 aiprevious dd ?
-val db 0
+
+;Variables needed for the GUI
+rownumbers db "1 2 3 4 5 6 7",0
+blank db "- ",0
+capitalX db "X ",0
+capitalO db "O ",0
+point dd 0
 
 ; for counting how many tokens are in a row/diagonal
 vcheck_accumulator BYTE 0
@@ -32,7 +38,11 @@ static_index DWORD ?
 .code
 
 main PROC
-
+mov eax, 0
+mov ebx, 0
+mov ecx, 0
+mov edx, 0
+Call BoardPrint
 	exit
 main ENDP
 
@@ -466,7 +476,46 @@ checkFull Proc
 ret
 checkFull endp
 
+;Prints the board for Connect 4 Author: Nick Foley
 BoardPrint PROC
+	mov esi, offset board
+	mov point, 0
+	mov edx, offset rownumbers
+	Call WriteString
+	CALL CRLF
+	mov al, 1
+	mov bl, 2
+Print:
+	mov ecx, 7
+	PrintRow:
+		cmp [esi],al
+		je X
+		cmp [esi],bl
+		je O
+		jmp nothing
+	X:
+		mov edx, offset capitalX
+		Call WriteString
+		jmp over
+	O:
+		mov edx, offset capitalO
+		Call WriteString
+		jmp over
+	nothing:
+		mov edx, offset blank
+		Call WriteString
+		jmp over
+	over:
+		add esi, 6
 
+Loop PrintRow
+	Call CRLF
+	inc point
+	cmp point, 6
+	je printDone
+	sub esi, 41
+	jmp Print
+printDone:
+ret
 BoardPrint endp
 END main
