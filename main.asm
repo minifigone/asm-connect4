@@ -296,7 +296,8 @@ check_bt_diagonal:
 jmp no_victory
 
 victory:
-	mov winner, [edi]
+	; need to fix this, mem/mem won't compile correctly
+	mov winner, [esi]
 
 no_victory:
 ret ;
@@ -347,13 +348,23 @@ ResetGame endp
 ; resets the board and begins new game
 ResetBoard Proc
 
+mov esi, offset board
+mov ecx, 42
+
+reset_board:
+	mov eax, 0
+	mov [esi], eax 
+	add esi, 1
+loop reset_board
+
+Call main
 ret
 ResetBoard endp
 
 AIPlaceRandom PROC
 
 mov eax, 7
-Call RandomInt
+Call RandomRange
 Call findColumn
 
 ret
@@ -368,7 +379,7 @@ AIPlacesmart PROC
 	je right
 	cmp ebx, 6
 	je left 
-	Call RandomInt
+	Call RandomRange
 	cmp eax, 3
 	jle left
 	jmp right
