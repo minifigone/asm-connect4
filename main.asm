@@ -53,7 +53,7 @@ checkVictory PROC
 mov esi, edi ; copy pointer
 mov eax, static_index
 mov roaming_index, eax ; copy index
-mov ecx, 0
+mov ecx, 1
 
 ; check down
 down_check_loop:
@@ -82,7 +82,7 @@ down_check_loop:
 	
 	down_diff_token: ; don't keep checking if the token changed, shouldn't be a victory below that
 		mov esi, edi ; reset pointer	
-		mov ecx, 0 ; reset counter
+		mov ecx, 1 ; reset counter
 		mov eax, static_index
 		inc eax
 		mov roaming_index, eax
@@ -145,7 +145,7 @@ horizontal_check_loop:
 		jge victory
 
 	; reset for diagonal
-	mov ecx, 0
+	mov ecx, 1
 	mov esi, edi
 	mov eax, static_index
 	mov roaming_index, eax
@@ -219,7 +219,7 @@ check_tb_diagonal:
 		jge victory
 
 	; reset for other diagonal
-	mov ecx, 0
+	mov ecx, 1
 	mov esi, edi
 	mov eax, static_index
 	mov roaming_index, eax
