@@ -22,6 +22,7 @@ computer_piece BYTE 2
 
 ;Recors the previous move taken be the AI
 aiprevious dd ?
+val db 0
 
 ; for counting how many tokens are in a row/diagonal
 vcheck_accumulator BYTE 0
@@ -307,7 +308,7 @@ Call ReadChar
 Call Crlf
 
 cmp edx, 'Y'
-je reset:
+je reset
 jne checkN
 
 checkN:
@@ -317,10 +318,10 @@ jne checky
 
 checky:
 cmp edx, 'y'
-je reset:
+je reset
 jne checkn
 
-checkn:
+checkno:
 cmp edx, 'n'
 je done
 jne invalidChar
@@ -355,26 +356,26 @@ Call findColumn
 
 ret
 
-AIPlace endp
+AIPlaceRandom endp
 
 ;Bases placement off of previous move
 AIPlacesmart PROC
-mov eax, 7
-mov ebx, aiprevious
-cmp ebx, 0
-je right
-cmp ebx, 6
-je left 
-Call RandomInt
-cmp eax, 3
-jle left
-jmp right
+	mov eax, 7
+	mov ebx, aiprevious
+	cmp ebx, 0
+	je right
+	cmp ebx, 6
+	je left 
+	Call RandomInt
+	cmp eax, 3
+	jle left
+	jmp right
 left:
-sub eax, 1
-Call findColumn
+	sub eax, 1
+	Call findColumn
 right:
-add eax, 1
-Call findColumn
+	add eax, 1
+	Call findColumn
 ret
 AIPlacesmart endp
 
@@ -383,75 +384,76 @@ placeTop PROC
 
 ;These move up the column until an open space is found
 find:
-cmp [esi], 0
-je place 
-dec esi
+	mov dl, [esi]
+	cmp dl, 0
+	je place 
+	dec esi
 Loop find
 
 ;This puts a piece inside of the array
 place:
-mov [esi], 2
-
+	mov dl, computer_piece
+	mov [esi], dl
 ret
 placeTop endp
 
 ;Finds the column that is needed
 findColumn PROC
-mov esi, offset board
+	mov esi, offset board
 
-;These check which colum wall have the piece placed inside of it
-cmp eax, 0
-je place0
-cmp eax, 1
-je place1
-cmp eax, 2
-je place2
-cmp eax, 3
-je place3
-cmp eax, 4
-je place4
-cmp eax, 5
-je place5
-cmp eax, 6
-je place6
-jmp finish
+	;These check which colum wall have the piece placed inside of it
+	cmp eax, 0
+	je place0
+	cmp eax, 1
+	je place1
+	cmp eax, 2
+	je place2
+	cmp eax, 3
+	je place3
+	cmp eax, 4
+	je place4
+	cmp eax, 5
+	je place5
+	cmp eax, 6
+	je place6
+	jmp finish
 
 ;These place a piece in the chosen column
 ;and place it at the top of the column
 place0:
-Call placeTop
-mov aiprevious, eax
-jmp finish
+	Call placeTop
+	mov aiprevious, eax
+	jmp finish
 place1:
-add esi, 11
-Call placeTop
-mov aiprevious, eax
-jmp finish
+	add esi, 11
+	Call placeTop
+	mov aiprevious, eax
+	jmp finish
 place2:
-add esi, 17
-Call placeTop
-mov aiprevious, eax
-jmp finish
+	add esi, 17
+	Call placeTop
+	mov aiprevious, eax
+	jmp finish
 place3:
-add esi, 23
-Call placeTop
-mov aiprevious, eax
-jmp finish
+	add esi, 23
+	Call placeTop
+	mov aiprevious, eax
+	jmp finish
 place4:
-add esi, 29
-Call placeTop
-mov aiprevious, eax
-jmp finish
+	add esi, 29
+	Call placeTop
+	mov aiprevious, eax
+	jmp finish
 place5:
-add esi, 35
-Call placeTop
-mov aiprevious, eax
-jmp finish
+	add esi, 35
+	Call placeTop
+	mov aiprevious, eax
+	jmp finish
 place6:
-add esi,41
-Call placeTop
-mov aiprevious, eax
-jmp finish
+	add esi,41
+	Call placeTop
+	mov aiprevious, eax
+	jmp finish
 
 finish:
 ret
@@ -459,9 +461,9 @@ findColumn endp
 
 ;Implement A function to check whether or
 ;not a wanted column is filled
-checkFullProc
+checkFull Proc
 
 ret
-checkProc endp
+checkFull endp
 
 END main
