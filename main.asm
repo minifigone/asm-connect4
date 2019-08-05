@@ -13,7 +13,7 @@ goodbye BYTE "Thank you for playing Connect 4, goodbye", 0
 ; 04 10 16 22 28 34 40
 ; 05 11 17 23 29 35 41
 board BYTE 42 DUP(0) ; six rows, seven columns; each six is a column, lowest num is highest position
-rows BYTE 6
+rows DWORD 6
 columns BYTE 7
 
 empty BYTE 0
@@ -108,7 +108,7 @@ horizontal_check_loop:
 			jmp check_left_loop
 
 		left_diff_token:
-			jmp reset_ptr
+			jmp reset_ptr_horizontial
 	
 	; reset
 	reset_ptr_horizontial:
@@ -140,7 +140,7 @@ horizontal_check_loop:
 			jmp horizontial_check
 		
 	; check if greater than or equal to 4
-	horizontal_check:
+	horizontial_check:
 		cmp ecx, 4
 		jge victory
 
