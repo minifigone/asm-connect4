@@ -20,6 +20,8 @@ empty BYTE 0
 player_piece BYTE 1
 computer_piece BYTE 2
 
+winner BYTE 0 ; piece of winner added here when someone wins
+
 ;Recors the previous move taken be the AI
 aiprevious dd ?
 val db 0
@@ -294,7 +296,7 @@ check_bt_diagonal:
 jmp no_victory
 
 victory:
-	; raise a flag or something, i don't know
+	mov winner, [edi]
 
 no_victory:
 ret ;
