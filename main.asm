@@ -38,11 +38,6 @@ main PROC
 	exit
 main ENDP
 
-WinProc PROC
-
-ret
-WinProc endp
-
 checkVictory PROC
 ; static_index -> index of last played token
 ; edi -> pointer for last played token
@@ -350,9 +345,9 @@ ResetBoard Proc
 
 mov esi, offset board
 mov ecx, 42
+mov eax, 0
 
 reset_board:
-	mov eax, 0
 	mov [esi], eax 
 	add esi, 1
 loop reset_board
@@ -474,7 +469,26 @@ findColumn endp
 
 ;Implement A function to check whether or
 ;not a wanted column is filled
+;this should be called after each move by the player
+;and the AI, so eax will have the row number
 checkFull Proc
+sub eax, 1
+mov esi, offset board
+mov ecx, 6
+check_full:
+	mov ebx, [esi]
+	cmp ebx, 1
+	jge full
+	jl not_full
+
+	not_full:
+	jmp done
+
+	full:
+	
+	done:
+	add esi, 7
+loop check_full:
 
 ret
 checkFull endp
