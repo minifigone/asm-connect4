@@ -13,8 +13,8 @@ goodbye BYTE "Thank you for playing Connect 4, goodbye", 0
 ; 04 10 16 22 28 34 40
 ; 05 11 17 23 29 35 41
 board BYTE 42 DUP(0) ; six rows, seven columns; each six is a column, lowest num is highest position
-rows DWORD 6
-columns BYTE 7
+rows dd 6
+columns dd 7
 
 empty BYTE 0
 player_piece BYTE 1
@@ -124,7 +124,7 @@ horizontal_check_loop:
 		mov roaming_index, eax
 
 		cmp eax, 41 ; off the right side of the board
-		jg horizontial_check
+		jg horizontal_check
 
 		add esi, rows
 		mov ebx, [esi]
@@ -137,10 +137,10 @@ horizontal_check_loop:
 			jmp check_right_loop
 
 		right_diff_token:
-			jmp horizontial_check
+			jmp horizontal_check
 		
 	; check if greater than or equal to 4
-	horizontial_check:
+	horizontal_check:
 		cmp ecx, 4
 		jge victory
 
@@ -351,7 +351,7 @@ ResetBoard endp
 AIPlaceRandom PROC
 
 mov eax, 7
-Call RandomInt
+Call Randomrange
 Call findColumn
 
 ret
@@ -366,7 +366,7 @@ AIPlacesmart PROC
 	je right
 	cmp ebx, 6
 	je left 
-	Call RandomInt
+	Call Randomrange
 	cmp eax, 3
 	jle left
 	jmp right
@@ -466,4 +466,7 @@ checkFull Proc
 ret
 checkFull endp
 
+BoardPrint PROC
+
+BoardPrint endp
 END main
