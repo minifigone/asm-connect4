@@ -44,10 +44,28 @@ mov eax, 0
 mov ebx, 0
 mov ecx, 0
 mov edx, 0
+;mainloop:
+Call AIPlaceRandom
+Call AIPlaceSmart
+Call AIPlaceRandom
+Call AIPlaceSmart
+Call AIPlaceRandom
+Call AIPlaceSmart
 Call BoardPrint
+mov eax, 1000
+Call Delay
+;jmp mainloop
 	exit
 main ENDP
 
+
+Clear PROC
+	mov eax, 0
+	mov ebx, 0
+	mov ecx, 0
+	mov edx, 0
+ret
+Clear endp
 WinProc PROC
 
 ret
@@ -383,31 +401,16 @@ AIPlacesmart PROC
 	jle left
 	jmp right
 left:
+	mov eax, ebx
+	sub eax, 1
 	sub eax, 1
 	Call findColumn
 right:
+	mov eax, ebx
 	add eax, 1
 	Call findColumn
 ret
 AIPlacesmart endp
-
-;Places at the top of the column
-placeTop PROC
-
-;These move up the column until an open space is found
-find:
-	mov dl, [esi]
-	cmp dl, 0
-	je place 
-	dec esi
-Loop find
-
-;This puts a piece inside of the array
-place:
-	mov dl, computer_piece
-	mov [esi], dl
-ret
-placeTop endp
 
 ;Finds the column that is needed
 findColumn PROC
@@ -433,6 +436,7 @@ findColumn PROC
 ;These place a piece in the chosen column
 ;and place it at the top of the column
 place0:
+	add esi, 5
 	Call placeTop
 	mov aiprevious, eax
 	jmp finish
@@ -471,14 +475,34 @@ finish:
 ret
 findColumn endp
 
-;Implement A function to check whether or
-;not a wanted column is filled
-checkFull Proc
+;Places at the top of the column
+placeTop PROC
 
+	;These move up the column until an open space is found
+	find:
+		mov dl, [esi]
+		cmp dl, 0
+		je place 
+		dec esi
+	jmp find
+
+	;This puts a piece inside of the array
+	place:
+		mov dl, computer_piece
+		mov [esi], dl
+	ret
+placeTop endp
+
+
+;Implement A function to check whether or
+
+checkFull Proc
+	
 ret
 checkFull endp
 
 ;Prints the board for Connect 4 Author: Nick Foley
+;All variabes are refreshed here
 BoardPrint PROC
 	mov esi, offset board
 	mov point, 0
