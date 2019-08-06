@@ -409,35 +409,37 @@ checkVictory ENDP
 
 ; procedure to check if the player would like to play the game again.
 ResetGame proc
+AskAgain:
 mov edx, offset reset_message
 Call WriteString
 Call ReadChar
 Call Crlf
 
-cmp edx, 'Y'
+cmp al, 'Y'
 je reset
 jne checkN
 
 checkN:
-cmp edx, 'N'
+cmp al, 'N'
 je done
 jne checky
 
 checky:
-cmp edx, 'y'
+cmp al, 'y'
 je reset
-jne checkn
+jne checkno
 
 checkno:
-cmp edx, 'n'
+cmp al, 'n'
 je done
 jne invalidChar
+
 
 invalidChar:
 mov edx, offset invalid_char
 Call WriteString
 Call Crlf
-jmp reset
+jmp AskAgain
 
 reset:
 Call ResetBoard
@@ -454,12 +456,12 @@ ResetGame endp
 
 ; resets the board and begins new game
 ResetBoard Proc
-	mov eax, 0
+	mov al, 0
 	mov ecx, 42
 	mov edi, offset board
 
 	reset_loop:
-		mov [edi], eax
+		mov [edi], aL
 		inc edi
 		loop reset_loop
 ret
