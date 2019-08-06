@@ -48,6 +48,10 @@ column_input_prompt BYTE "Enter a number between 1 and 7 where you want to place
 column_input_error BYTE "Invalid value!",0
 column_input_full BYTE "Requested column is full!",0
 
+;Winner messages
+ai_winner BYTE "The Computer won!", 0
+player_winner BYTE "You won!", 0
+
 debug_string BYTE "too far",0
 .code
 
@@ -116,10 +120,16 @@ mainloop:
 	jmp mainloop
 
 AIwinner:
-
+mov edx, offset ai_winner
+Call WriteString
+Call Crlf
+jmp replay
 
 PlayerWinner:
-
+mov edx, offset player_winner
+Call WriteString
+Call Crlf
+jmp replay
 
 BoardFull:
 mov edx, offset fullMessage
