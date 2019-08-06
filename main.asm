@@ -248,6 +248,7 @@ horizontal_check_loop:
 	; check if greater than or equal to 4
 	horizontal_check:
 		mov token_counter, ecx
+		mov eax, ecx
 		cmp ecx, 4
 		jge victory
 		mov ecx, token_counter
@@ -402,6 +403,7 @@ check_bt_diagonal:
 		mov token_counter, ecx
 		cmp ecx, 4
 		jge victory
+		mov ecx, token_counter
 
 ; maybe clear things
 jmp no_victory
