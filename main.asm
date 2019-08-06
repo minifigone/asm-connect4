@@ -166,8 +166,6 @@ down_check_loop:
 
 	mov token_counter, ecx
 	mov eax, ecx
-	call WriteInt
-	call CRLF
 	cmp ecx, 4 ; check victory condition on accumulator
 	jge victory
 
@@ -191,6 +189,7 @@ down_check_loop:
 	down_diff_token: ; don't keep checking if the token changed, shouldn't be a victory below that
 		mov esi, edi ; reset pointer	
 		mov ecx, 1 ; reset counter
+		mov token_counter, ecx
 		mov eax, static_index
 		mov roaming_index, eax ; reset index
 
@@ -205,8 +204,8 @@ horizontal_check_loop:
 		cmp eax, 0 ; off the left side of the board
 		jl reset_ptr_horizontial
 
-		mov ebx, [esi]
-		cmp ebx, [edi]
+		mov bl, [esi]
+		cmp bl, [edi]
 		je left_same_token
 		jne left_diff_token
 
@@ -234,8 +233,8 @@ horizontal_check_loop:
 		jg horizontal_check
 
 		add esi, rows
-		mov ebx, [esi]
-		cmp ebx, [edi]
+		mov bl, [esi]
+		cmp bl, [edi]
 		je right_same_token
 		jne right_diff_token		
 
@@ -248,11 +247,14 @@ horizontal_check_loop:
 		
 	; check if greater than or equal to 4
 	horizontal_check:
+		mov token_counter, ecx
 		cmp ecx, 4
 		jge victory
+		mov ecx, token_counter
 
 	; reset for diagonal
 	mov ecx, 1
+	mov token_counter, ecx
 	mov esi, edi
 	mov eax, static_index
 	mov roaming_index, eax
@@ -276,8 +278,8 @@ check_tb_diagonal:
 		cmp eax, 0 ; off the left side of the board
 		jl reset_ptr_tb_diagonal
 
-		mov ebx, [esi]
-		cmp ebx, [edi]
+		mov bl, [esi]
+		cmp bl, [edi]
 		je tb_ul_same_token
 		jne tb_ul_diff_token
 
@@ -309,8 +311,8 @@ check_tb_diagonal:
 		cmp edx, 0 ; wrapped to the top of the next column, so off the bottom of the board
 		je tb_diagonal_check
 
-		mov ebx, [esi]
-		cmp ebx, [edi]
+		mov bl, [esi]
+		cmp bl, [edi]
 		je tb_dr_same_token
 		jne tb_dr_diff_token
 
@@ -322,11 +324,14 @@ check_tb_diagonal:
 			jmp tb_diagonal_check
 
 	tb_diagonal_check:
+		mov token_counter, ecx
 		cmp ecx, 4
 		jge victory
+		mov ecx, token_counter
 
 	; reset for other diagonal
 	mov ecx, 1
+	mov token_counter, ecx
 	mov esi, edi
 	mov eax, static_index
 	mov roaming_index, eax
@@ -349,8 +354,8 @@ check_bt_diagonal:
 		cmp edx, 0 ; wrapped to the top of the next column, so off the bottom of the board
 		je reset_ptr_bt_diagonal
 
-		mov ebx, [esi]
-		cmp ebx, [edi]
+		mov bl, [esi]
+		cmp bl, [edi]
 		je bt_dl_same_token
 		jne bt_dl_diff_token
 
@@ -381,8 +386,8 @@ check_bt_diagonal:
 		div rows
 		cmp edx, 5 ; wrapped to the bottom of the next column, so off the top of the board
 
-		mov ebx, [esi]
-		cmp ebx, [edi]
+		mov bl, [esi]
+		cmp bl, [edi]
 		je bt_ur_same_token
 		jne bt_ur_diff_token
 
@@ -394,6 +399,7 @@ check_bt_diagonal:
 			jmp bt_diagonal_check
 
 	bt_diagonal_check:
+		mov token_counter, ecx
 		cmp ecx, 4
 		jge victory
 
