@@ -185,7 +185,7 @@ down_check_loop:
 	mov eax, roaming_index
 	div rows ; will tell if at top of column, i.e. can't keep checking down
 	cmp edx, 0 ; at the top of the next column
-	je horizontal_check_loop ; at the top of the next column
+	je down_diff_token ; at the top of the next column
 	
 	mov bl, [esi] ; stage comparison
 	cmp bl, [edi] ; compare tokens
