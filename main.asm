@@ -394,10 +394,10 @@ check_bt_diagonal:
 
 	count_up_right_loop:
 		add esi, rows
-		add esi, 1
+		sub esi, 1
 		mov eax, roaming_index
 		add eax, rows
-		add eax, 1
+		sub eax, 1
 		mov roaming_index, eax
 
 		cmp eax, 41 ; off the right side of the board
