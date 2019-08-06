@@ -21,6 +21,7 @@ empty BYTE 0
 player_piece BYTE 1
 computer_piece BYTE 2
 selected BYTE 0
+tempInput dd 0
 
 winner BYTE 0 ; piece of winner added here when someone wins
 full BYTE 0 ; Flips to 1 if the whole board is full
@@ -692,6 +693,14 @@ column_full:
 	
 valid_input:
 	sub eax, 1
+	mov tempInput, eax
+	mov esi, offset board
+	MUL rows
+	add esi, eax
+	mov dl, empty
+	cmp [esi], dl
+	jne column_full
+	mov eax, tempInput
 	Call findColumn
 ret ;
 getInput ENDP
