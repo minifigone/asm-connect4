@@ -53,6 +53,8 @@ column_input_full BYTE "Requested column is full!",0
 ai_winner BYTE "The Computer won!", 0
 player_winner BYTE "You won!", 0
 
+;AI play message
+ai_placed_message BYTE "AIs move: ",0
 debug_string BYTE "too far",0
 .code
 
@@ -69,6 +71,9 @@ mainloop:
 	mov selected, 0
 	Call AIPlaceRandom
 	Call checkVictory
+	mov edx, offset ai_placed_message
+	Call WriteString
+	Call CRLF
 	Call BoardPrint
 	mov al, winner
 	cmp al, 2
@@ -95,6 +100,9 @@ mainloop:
 	mov selected, 0
 	Call AIPlaceSmart
 	Call checkVictory
+	mov edx, offset ai_placed_message
+	Call WriteString
+	Call CRLF
 	Call BoardPrint
 	Call CRLF
 	mov al, winner
@@ -508,8 +516,12 @@ ai_place_smart:
 	je left 
 	Call Randomrange
 	cmp eax, 3
-	jle left
-	jmp right
+	jl left
+	jg right
+top:
+	mov eax, ebx
+	Call findColumn
+	jmp pieceplaced
 left:
 	mov eax, ebx
 	sub eax, 1
