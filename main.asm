@@ -202,7 +202,7 @@ horizontal_check_loop:
 		mov roaming_index, eax
 
 		cmp eax, 0 ; off the left side of the board
-		jl reset_ptr_horizontial
+		jl reset_ptr_horizontal
 
 		mov bl, [esi]
 		cmp bl, [edi]
@@ -214,10 +214,10 @@ horizontal_check_loop:
 			jmp check_left_loop
 
 		left_diff_token:
-			jmp reset_ptr_horizontial
+			jmp reset_ptr_horizontal
 	
 	; reset
-	reset_ptr_horizontial:
+	reset_ptr_horizontal:
 		mov esi, edi
 		mov eax, static_index
 		mov roaming_index, eax
