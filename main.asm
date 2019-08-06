@@ -469,9 +469,6 @@ AIPlaceRandom PROC
 ai_place_random:
 	mov eax, 7
 	Call Randomrange
-	Call checkFull
-	cmp eax, -1
-	jmp ai_place_random
 	Call findColumn
 
 ret
@@ -493,21 +490,11 @@ ai_place_smart:
 left:
 	mov eax, ebx
 	sub eax, 1
-	add eax, 1
-	call checkFull
-	cmp eax, -1
-	je ai_place_smart
-	sub eax, 1
 	Call findColumn
 	jmp pieceplaced
 right:
 	mov eax, ebx
 	add eax, 1
-	add eax, 1
-	call checkFull
-	cmp eax, -1
-	je ai_place_smart
-	sub eax, 1
 	Call findColumn
 pieceplaced:
 ret
@@ -666,13 +653,10 @@ get_input:
 	jl invalid_input
 	cmp eax, 7
 	jg invalid_input
-	sub eax, 1
-	call checkFull
-	cmp eax, -1
-	je column_full
 	jmp valid_input
 	
 invalid_input:
+	
 	mov edx, offset column_input_error
 	call WriteString
 	call CRLF
@@ -685,6 +669,7 @@ column_full:
 	jmp get_input
 	
 valid_input:
+	sub eax, 1
 	Call findColumn
 ret ;
 getInput ENDP
@@ -717,31 +702,5 @@ checkDone:
 ret 
 allFull endp
 
-;Implement A function to check whether or
-;not a wanted column is filled
-;this should be called after each move by the player
-;and the AI, so eax will have the row number
-checkFull Proc
-sub eax, 1
-mov edi, offset board
-mov ecx, 6
-check_full:
-	mov ebx, [edi]
-	cmp ebx, 1
-	jge Singlefull
-	jl not_full
-
-	not_full:
-	jmp done
-
-	Singlefull:
-		mov eax, -1 ; check this in the getinput and aiplace procedures
-	
-	done:
-	add edi, 7
-loop check_full
-
-ret
-checkFull endp
 
 END main
