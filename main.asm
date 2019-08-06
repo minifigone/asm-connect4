@@ -150,6 +150,8 @@ replay:
 	mov al, resetFlag
 	cmp al, 1
 	je NewGame
+	mov eax, 2000
+	Call Delay
 	exit
 main ENDP
 
