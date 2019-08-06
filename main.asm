@@ -242,7 +242,6 @@ horizontal_check_loop:
 		cmp eax, 41 ; off the right side of the board
 		jg horizontal_check
 
-		add esi, rows
 		mov bl, [esi]
 		cmp bl, [edi]
 		je right_same_token
