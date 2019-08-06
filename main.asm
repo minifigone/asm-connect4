@@ -37,7 +37,7 @@ capitalO db "O ",0
 point dd 0
 
 ; for counting how many tokens are in a row/diagonal
-vcheck_accumulator BYTE 0
+token_counter DWORD 0
 
 ; because indices are separate of pointers
 roaming_index DWORD ?
@@ -159,8 +159,19 @@ mov ecx, 1
 
 ; check down
 down_check_loop:
+	inc esi ; move the pointer down the column
+	mov eax, roaming_index
+	inc eax ; move the index down the column
+	mov roaming_index, eax
+
+	mov token_counter, ecx
+	mov eax, ecx
+	call WriteInt
+	call CRLF
 	cmp ecx, 4 ; check victory condition on accumulator
 	jge victory
+
+	mov ecx, token_counter
 
 	mov edx, 0
 	mov eax, roaming_index
@@ -168,17 +179,13 @@ down_check_loop:
 	cmp edx, 0 ; at the top of the next column
 	je horizontal_check_loop ; at the top of the next column
 	
-	mov ebx, [esi] ; stage comparison
-	cmp ebx, [edi] ; compare tokens
+	mov bl, [esi] ; stage comparison
+	cmp bl, [edi] ; compare tokens
 	je down_same_token
 	jne down_diff_token
 	
 	down_same_token:
 		inc ecx ; same token, increment counter
-		inc esi ; move the pointer down the column
-		mov eax, roaming_index
-		inc eax ; move the index down the column
-		mov roaming_index, eax
 		jmp down_check_loop ; same token, loop
 	
 	down_diff_token: ; don't keep checking if the token changed, shouldn't be a victory below that
@@ -397,11 +404,6 @@ victory:
 	mov eax, 0
 	mov al, [edi]
 	mov winner, al
-	call WriteInt
-	call CRLF
-	mov edx, offset debug_string
-	call WriteString
-	call CRLF
 
 no_victory:
 ret 
