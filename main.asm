@@ -395,6 +395,7 @@ check_bt_diagonal:
 		mov edx, 0
 		div rows
 		cmp edx, 5 ; wrapped to the bottom of the next column, so off the top of the board
+		je bt_diagonal_check
 
 		mov bl, [esi]
 		cmp bl, [edi]
