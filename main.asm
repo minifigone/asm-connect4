@@ -17,6 +17,8 @@ board BYTE 42 DUP(0) ; six rows, seven columns; each six is a column, lowest num
 rows dd 6
 columns dd 7
 
+;Variables needed to properly display and
+;input to the board
 empty BYTE 0
 player_piece BYTE 1
 computer_piece BYTE 2
@@ -25,12 +27,12 @@ tempInput dd 0
 
 winner BYTE 0 ; piece of winner added here when someone wins
 full BYTE 0 ; Flips to 1 if the whole board is full
-resetFlag BYTE 0 ; Flips is the game wants to be reset
+resetFlag BYTE 0 ; Flips if the game wants to be reset
 
-;Records the previous move taken be the AI
+;Records the previous move taken by the AI or user
 aiprevious dd ?
 
-;Variables needed for the GUI
+;Text needed for the GUI
 rownumbers db "1 2 3 4 5 6 7",0
 blank db "- ",0
 capitalX db "X ",0
@@ -498,6 +500,8 @@ ResetBoard Proc
 ret
 ResetBoard endp
 
+;This function Takes a random integer for the AI move
+;and places it on the board
 AIPlaceRandom PROC
 ai_place_random:
 	mov eax, 7
@@ -507,8 +511,13 @@ ai_place_random:
 ret
 AIPlaceRandom endp
 
-;Bases placement off of previous move
+;Bases placement off of previous move, no matter if it was 
+;user or AI chosen move
 AIPlacesmart PROC
+
+;This makes a range of numbers to determine whether
+;or not the place the piece on top or next to the previous
+;placrs piece
 ai_place_smart:
 	mov eax, 7
 	mov ebx, aiprevious
@@ -537,12 +546,13 @@ pieceplaced:
 ret
 AIPlacesmart endp
 
-;Finds the column that is needed
+;Finds the column that is needed for 
+;proper placement of the piece
 findColumn PROC
 	mov esi, offset board
 	mov ebx, 0 ; for the index
 
-	;These check which colum wall have the piece placed inside of it
+	;These check which colum will have the piece placed inside of it
 	cmp eax, 0
 	je place0
 	cmp eax, 1
@@ -608,10 +618,10 @@ finish:
 ret
 findColumn endp
 
-;Places at the top of the column
+;Places a piece at the top of the column
 placeTop PROC
 
-	;These move up the column until an open space is found
+	;This moves down the column until an open space is found
 	find:
 		mov dl, [esi]
 		cmp dl, 0
@@ -620,7 +630,7 @@ placeTop PROC
 		dec ebx ; pointer
 	jmp find
 
-	;This puts a piece inside of the array
+	;This puts a piece inside of the board no matter if it is player or AI
 	place:
 		cmp selected, 1
 		je player
@@ -636,24 +646,25 @@ placeTop PROC
 	ret
 placeTop endp
 
-;Prints the board for Connect 4 Author: Nick Foley
+;Prints the board for Connect 4 Author:
 ;All variabes are refreshed here
 BoardPrint PROC
 	mov esi, offset board
 	mov point, 0
 	mov edx, offset rownumbers
-	Call WriteString
+	Call WriteString ;Prints out the column numbers
 	CALL CRLF
 	mov al, 1
 	mov bl, 2
-Print:
+Print: ;Loops until every row has been printed
 	mov ecx, 7
-	PrintRow:
+	PrintRow: ;Loops through each column and displays what is in each column of the specified row
 		cmp [esi],al
 		je X
 		cmp [esi],bl
 		je O
 		jmp nothing
+	; Prints out X for Player, O for AI, and - for blank
 	X:
 		mov edx, offset capitalX
 		Call WriteString
@@ -667,16 +678,16 @@ Print:
 		Call WriteString
 		jmp over
 	over:
-		add esi, 6
+		add esi, 6 ;Increases the pointer for each column in the row
 
 Loop PrintRow
 	Call CRLF
 	inc point
 	cmp point, 6
 	je printDone
-	sub esi, 41
+	sub esi, 41 ;Moves the pointer to the beggining of the new row
 	jmp Print
-printDone:
+printDone: ;Loops until each row has been printed
 ret
 BoardPrint endp
 
@@ -719,6 +730,8 @@ valid_input:
 ret ;
 getInput ENDP
 
+;This procedure checks if the entire board is full
+;and changes a variable 1 if it is
 allFull PROC
 	mov al, 0
 	mov esi, offset board
@@ -742,7 +755,7 @@ allFull PROC
 	add esi, 6
 	cmp [esi], al
 	je checkDone
-	mov full, 1
+	mov full, 1 ;Changes the full variable to 1 if the board is full
 checkDone:	
 ret 
 allFull endp
