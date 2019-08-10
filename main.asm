@@ -14,8 +14,8 @@ fullMessage BYTE "Game over, the board is full!", 0
 ; 04 10 16 22 28 34 40
 ; 05 11 17 23 29 35 41
 board BYTE 42 DUP(0) ; six rows, seven columns; each six is a column, lowest num is highest position
-rows dd 6
-columns dd 7
+rows DWORD 6
+columns DWORD 7
 
 ;Variables needed to properly display and
 ;input to the board
@@ -30,14 +30,17 @@ full BYTE 0 ; Flips to 1 if the whole board is full
 resetFlag BYTE 0 ; Flips if the game wants to be reset
 
 ;Records the previous move taken by the AI or user
-aiprevious dd ?
+aiprevious DWORD ?
+
+; flag for the ai to stop a vertical victory
+ai_stop_vertical DWORD 0
 
 ;Text needed for the GUI
-rownumbers db "1 2 3 4 5 6 7",0
-blank db "- ",0
-capitalX db "X ",0
-capitalO db "O ",0
-point dd 0
+rownumbers BYTE "1 2 3 4 5 6 7",0
+blank BYTE "- ",0
+capitalX BYTE "X ",0
+capitalO BYTE "O ",0
+point DWORD 0
 
 ; for counting how many tokens are in a row/diagonal
 token_counter DWORD 0
@@ -69,35 +72,30 @@ mov eax, 0
 mov ebx, 0
 mov ecx, 0
 mov edx, 0
+
+;Starts the game with an AI random Place
+mov selected, 0
+Call AIPlaceRandom
+Call BoardPrint
+
+;This is the main running loop for the Program, it switches
+;between a smartAI input and then moves to
+;a playerinput afterwards
 mainloop:
-	mov selected, 0
-	Call AIPlaceRandom
-	Call checkVictory
-	mov edx, offset ai_placed_message
-	Call WriteString
-	Call CRLF
-	Call BoardPrint
+	mov selected, 1 ;Sets the value to let procedures know the player is placing
+	Call getInput
+	Call CheckVictory ;Checks if there is a victory after the Player moves
+	Call BoardPrint ; Prints the board with the new piece
 	mov al, winner
-	cmp al, 2
-	je AIwinner
-	Call allFull
+	cmp al, 1
+	je PlayerWinner ;If there is a win jump to the AI win section
+	Call allFull ;Checks to see if the board is full
 	mov al, full
 	cmp al, 1
-	je BoardFull
+	je BoardFull ;If the board is full jump to the appropriate boardFull section
 	Call CRLF
 
-	mov selected, 1
-	Call getInput
-	Call CheckVictory
-	Call BoardPrint
-	Call CRLF
-	mov al, winner
-	cmp al, 1
-	je PlayerWinner
-	Call allFull
-	mov al, full
-	cmp al, 1
-	je BoardFull
+	;Repeat above for steps for the AI and any subsequent moves
 
 	mov selected, 0
 	Call AIPlaceSmart
@@ -115,43 +113,30 @@ mainloop:
 	cmp al, 1
 	je BoardFull
 
-	mov selected, 1
-	Call getInput
-	Call checkVictory
-	Call BoardPrint
-	Call CRLF
-	mov al, winner
-	cmp al, 1
-	je PlayerWinner
-	Call allFull
-	mov al, full
-	cmp al, 1
-	je BoardFull
-
 	jmp mainloop
 
-AIwinner:
+AIwinner: ;This prints out the appropriate message if the AI wins
 mov edx, offset ai_winner
 Call WriteString
 Call Crlf
-jmp replay
+jmp replay 
 
-PlayerWinner:
+PlayerWinner: ;This prints out the appropriate message if the player wins
 mov edx, offset player_winner
 Call WriteString
 Call Crlf
 jmp replay
 
-BoardFull:
+BoardFull: ;This prints out the appropriate message of the board is full
 mov edx, offset fullMessage
 Call WriteString
 Call CRLF
 
-replay:
+replay: ;This will reset the game if the user chooses to play again
 	Call ResetGame
 	mov al, resetFlag
 	cmp al, 1
-	je NewGame
+	je NewGame ;This jumps back to the top of the program if the user chosses to play again
 	mov eax, 2000
 	Call Delay
 	exit
@@ -167,6 +152,9 @@ ret
 Clear endp
 
 checkVictory PROC
+; checks if a victory condition (4+ tokens in a row) has been met based on the last played token
+; author: Tom Castle
+
 ; static_index -> index of last played token
 ; edi -> pointer for last played token
 ; esi -> roaming pointer
@@ -188,9 +176,18 @@ down_check_loop:
 	mov roaming_index, eax
 
 	mov token_counter, ecx
-	mov eax, ecx
-	cmp ecx, 4 ; check victory condition on accumulator
-	jge victory
+	cmp ecx, 3
+	je stop_vertical
+	jne check_for_vertical_victory
+	
+	stop_vertical: ; no more easy wins by just stacking things
+		mov eax, 1
+		mov ai_stop_vertical, eax
+
+	check_for_vertical_victory:
+		mov ecx, token_counter
+		cmp ecx, 4 ; check victory condition on accumulator
+		jge victory
 
 	mov ecx, token_counter
 
@@ -441,6 +438,7 @@ ret
 checkVictory ENDP
 
 ; procedure to check if the player would like to play the game again.
+;Author: Sam Partlow
 ResetGame proc
 AskAgain:
 mov edx, offset reset_message
@@ -488,20 +486,22 @@ ret
 ResetGame endp
 
 ; resets the board and begins new game
+; Author: Sam Partlow
 ResetBoard Proc
 	mov al, 0
 	mov ecx, 42
 	mov edi, offset board
 
-	reset_loop:
+	reset_loop: ;Fills all the values in the board with 0
 		mov [edi], aL
 		inc edi
 		loop reset_loop
 ret
 ResetBoard endp
 
-;This function Takes a random integer for the AI move
-;and places it on the board
+;This function Takes a random integer from 0-6 for 
+;the AI move and places it on the board 
+;Author: Nick Foley
 AIPlaceRandom PROC
 ai_place_random:
 	mov eax, 7
@@ -512,33 +512,43 @@ ret
 AIPlaceRandom endp
 
 ;Bases placement off of previous move, no matter if it was 
-;user or AI chosen move
+;user or AI chosen move 
+;Author: Nick Foley
 AIPlacesmart PROC
 
 ;This makes a range of numbers to determine whether
 ;or not the place the piece on top or next to the previous
-;placrs piece
+;placed piece
 ai_place_smart:
-	mov eax, 7
+	mov eax, 15
 	mov ebx, aiprevious
+	mov ecx, 1
+	cmp ai_stop_vertical, ecx ;If there is a possible vertical victory it will be stopped by this
+	je stopWin
 	cmp ebx, 0
 	je right
 	cmp ebx, 6
 	je left 
 	Call Randomrange
-	cmp eax, 3
+	cmp eax, 5
 	jl left
+	cmp eax, 10
 	jg right
-top:
+	jmp top
+stopWin:
+	mov ai_stop_vertical, 0 ;Resets the vertical victory stopper
+top: ;Places on top of the previous
 	mov eax, ebx
 	Call findColumn
 	jmp pieceplaced
-left:
+
+left: ;Places to the left of the previous
 	mov eax, ebx
 	sub eax, 1
 	Call findColumn
 	jmp pieceplaced
-right:
+
+right: ;Places on top of the previous
 	mov eax, ebx
 	add eax, 1
 	Call findColumn
@@ -547,11 +557,29 @@ ret
 AIPlacesmart endp
 
 ;Finds the column that is needed for 
-;proper placement of the piece
+;proper placement of the piece 
+;Author: Nick Foley
 findColumn PROC
 	mov esi, offset board
 	mov ebx, 0 ; for the index
+	cmp selected, bl ;This checks if it is the AI placing
+	jne ignore ;It will skip it if the player is placing
 
+	;These instructions move the pointer to 41 (The max)
+	;if the column chosen for placement is already full.
+	;This ensures the AI will place a piece and there will
+	;be no overflow.
+	mov tempInput, eax
+	MUL rows
+	add esi, eax
+	cmp [esi], bl ;Checks if the top of the column is full
+	je moveon
+	jmp place6
+	moveon:
+	mov esi, offset board
+	mov eax, tempInput
+
+	ignore:
 	;These check which colum will have the piece placed inside of it
 	cmp eax, 0
 	je place0
@@ -608,6 +636,7 @@ place5:
 	mov aiprevious, eax
 	jmp finish
 place6:
+	mov esi, offset board
 	add esi, 41
 	add ebx, 41
 	Call placeTop
@@ -619,6 +648,7 @@ ret
 findColumn endp
 
 ;Places a piece at the top of the column
+;Author: Nick Foley
 placeTop PROC
 
 	;This moves down the column until an open space is found
@@ -648,6 +678,7 @@ placeTop endp
 
 ;Prints the board for Connect 4 Author:
 ;All variabes are refreshed here
+;Author: Nick Foley
 BoardPrint PROC
 	mov esi, offset board
 	mov point, 0
@@ -694,17 +725,20 @@ BoardPrint endp
 getInput PROC
 
 get_input:
+; gets column input from user
+; validates input and asks for another input if a bad value is supplied
+; author: Tom Castle
+
 	mov edx, offset column_input_prompt
 	call WriteString
 	call ReadInt
 	cmp eax, 1
-	jl invalid_input
+	jl invalid_input ; too small
 	cmp eax, 7
-	jg invalid_input
+	jg invalid_input ; too large
 	jmp valid_input
 	
 invalid_input:
-	
 	mov edx, offset column_input_error
 	call WriteString
 	call CRLF
@@ -724,7 +758,7 @@ valid_input:
 	add esi, eax
 	mov dl, empty
 	cmp [esi], dl
-	jne column_full
+	jne column_full ; the column was full, ask for another value
 	mov eax, tempInput
 	Call findColumn
 ret ;
@@ -732,6 +766,7 @@ getInput ENDP
 
 ;This procedure checks if the entire board is full
 ;and changes a variable 1 if it is
+;Author: Nick Foley
 allFull PROC
 	mov al, 0
 	mov esi, offset board
